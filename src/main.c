@@ -61,91 +61,81 @@ double get_elapsed_time(struct timeval start_time, struct timeval end_time)
 
 int ping(const char* ip_address)
 {
-	struct addrinfo hints;
-	struct addrinfo *result, *rp;
-	int sockfd = -1;
-	int ttl = TTL_VALUE;
-	int tries = 0;
-	int success = 0;
-	struct icmp_packet *packet;
-	struct sockaddr_in target_addr;
-	struct timeval start_time, end_time;
-	double elapsed_time;
+	int sockfd; // Socket file descriptor
+	struct sockaddr_in target_addr; // Target IP address
+	struct icmp_packet *s_packet, *r_packet; // ICMP packet
+	struct timeval start_time, end_time; // Start and end time of the ping
+	float elapsed_time; // Elapsed time in milliseconds
+	int tries = 0; // Number of tries
+	int num_pings = 5; // Number of pings
+	int num_success = 0; // Number of successful pings
 
-	memset(&hints, 0, sizeof(struct addrinfo));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_RAW;
-	hints.ai_protocol = IPPROTO_ICMP;
-
-	if (getaddrinfo(ip_address, NULL, &hints, &result) != 0)
+	sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+	if (sockfd < 0)
 	{
-		fprintf(stderr, "Error: getaddrinfo() failed: %s\n", gai_strerror(errno));
+		perror("socket");
 		return 1;
 	}
 
-	for (rp = result; rp != NULL; rp = rp->ai_next)
-	{
-		sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-		if (sockfd < 0)
-			continue;
+	memset(&target_addr, 0, sizeof(target_addr));
+	target_addr.sin_family = AF_INET;
+	target_addr.sin_addr.s_addr = inet_addr(ip_address);
 
-		if (setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl)) < 0)
-		{
-			perror("setsockopt");
-			close(sockfd);
-			return 1;
-		}
-
-		break;
-	}
-
-	if (rp == NULL)
-	{
-		fprintf(stderr, "Error: Could not create socket\n");
-		return 1;
-	}
-
-	memcpy(&target_addr, rp->ai_addr, sizeof(struct sockaddr_in));
-	freeaddrinfo(result);
-
-	packet = malloc(sizeof(struct icmp_packet) + PACKET_SIZE - 1);
-	if (packet == NULL)
+	s_packet = malloc(sizeof(struct icmp_packet) + PACKET_SIZE - 1);
+	if (s_packet == NULL)
 	{
 		fprintf(stderr, "Error: malloc() failed\n");
 		close(sockfd);
 		return 1;
 	}
 
-	packet->type = 8;
-	packet->code = 0;
-	packet->checksum = 0;
-	packet->identifier = getpid() & 0xFFFF;
-	packet->sequence_number = 0;
-	gettimeofday(&packet->timestamp, NULL);
-	gettimeofday(&start_time, NULL);
+	s_packet->sequence_number = 0;
+	s_packet->code = 0;
+	s_packet->identifier = getpid() & 0xFFFF;
+	s_packet->type = 8;
 
-	memset(packet->data, 0xA5, PACKET_SIZE);
-	packet->checksum = calculate_checksum(packet, sizeof(struct icmp_packet) + PACKET_SIZE - 1);
+
+	r_packet = malloc(sizeof(struct icmp_packet) + PACKET_SIZE - 1);
+	if (r_packet == NULL)
+	{
+		fprintf(stderr, "Error: malloc() failed\n");
+		close(sockfd);
+		free(s_packet);
+		return 1;
+	}
 
 	signal(SIGALRM, handle_alarm);
 
-	while (tries < MAX_TRIES && !success)
+	while (tries < num_pings)
 	{
-		if (sendto(sockfd, packet, sizeof(struct icmp_packet) + PACKET_SIZE - 1, 0, (struct sockaddr *)&target_addr, sizeof(target_addr)) < 0)
+		s_packet->checksum = 0;
+		gettimeofday(&s_packet->timestamp, NULL);
+		gettimeofday(&start_time, NULL);
+		memset(s_packet->data, 0xA5, PACKET_SIZE);
+		s_packet->checksum = calculate_checksum(s_packet, sizeof(struct icmp_packet) + PACKET_SIZE - 1);
+
+		// Send the ICMP s_packet to the target address
+		if (sendto(sockfd, s_packet, sizeof(struct icmp_packet) + PACKET_SIZE - 1, 0, (struct sockaddr *)&target_addr, sizeof(target_addr)) < 0)
 		{
 			perror("sendto");
 			close(sockfd);
-			free(packet);
+			free(s_packet);
+			free(r_packet);
 			return 1;
 		}
 
+		// Debug: Print the sent packet
+		//printf("Sent packet: type=%d code=%d id=%d seq=%d\n", s_packet->type, s_packet->code, s_packet->identifier, s_packet->sequence_number);
+
 		alarm(TIMEOUT);
 
-		if (recvfrom(sockfd, packet, sizeof(struct icmp_packet) + PACKET_SIZE - 1, 0, NULL, NULL) < 0)
+
+		// Wait for an ICMP packet to be received
+		if (recvfrom(sockfd, r_packet, sizeof(struct icmp_packet) + PACKET_SIZE - 1, 0, NULL, NULL) < 0)
 		{
 			if (errno == EINTR)
 			{
-				printf("Request timed out for icmp_seq %d\n", packet->sequence_number + 1);
+				printf("Request timed out for icmp_seq %d\n", r_packet->sequence_number);
 				tries++;
 				continue;
 			}
@@ -153,22 +143,26 @@ int ping(const char* ip_address)
 			{
 				perror("recvfrom");
 				close(sockfd);
-				free(packet);
+				free(s_packet);
+				free(r_packet);
 				return 1;
 			}
 		}
 
+		// Debug: Print the received packet
+		//printf("Received packet: type=%d code=%d id=%d seq=%d\n", r_packet->type, r_packet->code, r_packet->identifier, r_packet->sequence_number);
+
 		gettimeofday(&end_time, NULL);
 		elapsed_time = get_elapsed_time(start_time, end_time);
 
-		struct iphdr *ip_header = (struct iphdr *)packet;
-		struct icmphdr *icmp_header = (struct icmphdr *)(packet + ip_header->ihl * 4);
+		struct iphdr *ip_header = (struct iphdr *)r_packet;
+		struct icmphdr *icmp_header = (struct icmphdr *)(r_packet + ip_header->ihl * 4);
 
 		if (icmp_header->type == ICMP_ECHOREPLY)
 		{
 			printf("%d bytes from %s: icmp_seq=%d ttl=%d time=%.2f ms\n",
-				PACKET_SIZE, ip_address, packet->sequence_number + 1, ip_header->ttl, elapsed_time);
-			success = 1;
+				PACKET_SIZE, ip_address, s_packet->sequence_number, ip_header->ttl, elapsed_time);
+			num_success++;
 		}
 		else
 		{
@@ -176,12 +170,18 @@ int ping(const char* ip_address)
 		}
 
 		tries++;
+		s_packet->sequence_number++;
+		sleep(1);
 	}
 
 	close(sockfd);
-	free(packet);
+	free(s_packet);
+	free(r_packet);
 
-	return success ? 0 : 1;
+	if (num_success > 0)
+		return 0;
+	else
+		return 1;
 }
 
 int main(int argc, char **argv)
