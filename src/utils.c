@@ -14,24 +14,24 @@ void ft_bzero(void *s, size_t n)
 	s = (void *)ptr;
 }
 
-uint16_t calculate_checksum(const void *data, size_t length)
-{
-	uint32_t sum = 0;
-	const uint16_t *ptr = data;
+unsigned short calculate_checksum(void *buf, int len) {
+	unsigned short *ptr = buf;
+	unsigned int sum = 0;
+	unsigned short result;
 
-	while (length > 1)
-	{
+	for (sum = 0; len > 1; len -= 2) {
 		sum += *ptr++;
-		length -= 2;
 	}
 
-	if (length == 1)
-		sum += *(uint8_t *)ptr;
+	if (len == 1) {
+		sum += *(unsigned char*)ptr;
+	}
 
 	sum = (sum >> 16) + (sum & 0xFFFF);
 	sum += (sum >> 16);
+	result = ~sum;
 
-	return ~sum;
+	return result;
 }
 
 void handle_alarm(int signal)

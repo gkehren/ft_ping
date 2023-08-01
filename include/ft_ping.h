@@ -16,11 +16,12 @@
 #include <errno.h>
 
 #define PACKET_SIZE 64
+#define MAX_PACKET_SIZE 65535
 #define TIMEOUT 50000
 
-void		handle_alarm(int signal);
-void		ft_bzero(void *s, size_t n);
-uint16_t	calculate_checksum(const void *data, size_t length);
-double		get_elapsed_time(struct timeval *start_time, struct timeval *end_time);
+void				handle_alarm(int signal);
+void				ft_bzero(void *s, size_t n);
+unsigned short		calculate_checksum(void *buf, int len);
+double				get_elapsed_time(struct timeval *start_time, struct timeval *end_time);
 
 #endif
