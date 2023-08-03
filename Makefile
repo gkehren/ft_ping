@@ -1,4 +1,4 @@
-FILES:= main utils
+FILES:= main utils ft_split ft_ping
 NAME:= ft_ping
 
 # ------------------

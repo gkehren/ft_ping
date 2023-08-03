@@ -28,32 +28,38 @@ typedef struct s_packet
 
 typedef struct s_ping
 {
-	int				packet_size;
-	int				timeout;
-	int				sockfd;
-	struct			sockaddr_in target_addr;
-	t_packet		packet;
-	struct			timeval start_time;
-	struct			timeval end_time;
-	double			elapsed_time;
-	int				tries;
-	int				num_pings;
-	int				num_success;
-	int				num_failures;
-	double			min_rtt;
-	double			max_rtt;
-	double			total_rtt;
-	double			stddev_rtt;
-	double			*rtt;
-	char			*ip_address;
-	int				pid;
-	int				verbose;
-	int				help;
+	int						packet_size;
+	int						timeout;
+	int						sockfd;
+	struct sockaddr_in		target_addr;
+	t_packet				packet;
+	struct timeval			start_time;
+	struct timeval			end_time;
+	double					elapsed_time;
+	int						tries;
+	int						ttl;
+	int						num_pings;
+	int						num_success;
+	int						num_failures;
+	double					min_rtt;
+	double					max_rtt;
+	double					total_rtt;
+	double					stddev_rtt;
+	double					*rtt;
+	char					*ip_address;
+	char					*fqdn;
+	int						pid;
+	int						verbose;
+	int						help;
 }	t_ping;
 
-int	ft_strcmp(const char *s1, const char *s2);
+int					ping();
+void				display_stats();
 void				handle_alarm(int signal);
+char				*ft_strdup(const char *s1);
+char				**ft_split(char const *s, char c);
 unsigned short		calculate_checksum(void *buf, int len);
+int					ft_strcmp(const char *s1, const char *s2);
 double				get_elapsed_time(struct timeval *start_time, struct timeval *end_time);
 
 #endif
