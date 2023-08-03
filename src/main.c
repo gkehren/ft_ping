@@ -100,6 +100,16 @@ int init_socket()
 		free(ft_ping.rtt);
 		return 1;
 	}
+	ft_ping.timeout.tv_sec = 1;
+	ft_ping.timeout.tv_usec = 0;
+	if (setsockopt(ft_ping.sockfd, SOL_SOCKET, SO_RCVTIMEO, &ft_ping.timeout, sizeof(ft_ping.timeout)) < 0)
+	{
+		perror("setsockopt");
+		close(ft_ping.sockfd);
+		free(ft_ping.ip_address);
+		free(ft_ping.rtt);
+		return 1;
+	}
 
 	memset(&ft_ping.target_addr, 0, sizeof(ft_ping.target_addr));
 	ft_ping.target_addr.sin_family = AF_INET;

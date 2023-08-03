@@ -18,13 +18,17 @@ void handle_sigint(int signal)
 int ping()
 {
 	uint8_t buffer[PACKET_SIZE];
+	struct iovec iov[1];
+	iov[0].iov_base = &buffer;
+	iov[0].iov_len = sizeof(buffer);
 
-	signal(SIGALRM, handle_alarm);
+	struct msghdr msg = {0};
+	msg.msg_iov = iov;
+	msg.msg_iovlen = 1;
+
 	signal(SIGINT, handle_sigint);
 	if (ft_ping.verbose == 1)
-	{
 		printf("PING %s (%s): %lu data bytes, id 0x%x = %u\n", ft_ping.fqdn, ft_ping.ip_address, PACKET_SIZE - sizeof(struct icmphdr), ft_ping.pid, ft_ping.pid);
-	}
 	else
 		printf("PING %s (%s): %lu data bytes\n", ft_ping.fqdn, ft_ping.ip_address, PACKET_SIZE - sizeof(struct icmphdr));
 	while (1)
@@ -48,14 +52,18 @@ int ping()
 			return 1;
 		}
 
-		alarm(TIMEOUT);
-
 		// Wait for an ICMP packet to be received
-		if (recvfrom(ft_ping.sockfd, buffer, PACKET_SIZE, 0, NULL, NULL) < 0)
+		if (recvmsg(ft_ping.sockfd, &msg, 0) < 0)
 		{
 			if (errno == EINTR)
 			{
 				printf("Request timed out for icmp_seq %d\n", ft_ping.tries);
+				ft_ping.tries++;
+				ft_ping.num_failures++;
+				continue;
+			}
+			else if (errno == EAGAIN)
+			{
 				ft_ping.tries++;
 				ft_ping.num_failures++;
 				continue;

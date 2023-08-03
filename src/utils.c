@@ -57,12 +57,6 @@ unsigned short calculate_checksum(void *buf, int len) {
 	return result;
 }
 
-void handle_alarm(int signal)
-{
-	(void)signal;
-	// Do nothing
-}
-
 double get_elapsed_time(struct timeval *start_time, struct timeval *end_time)
 {
 	return (end_time->tv_sec - start_time->tv_sec) * 1000.0 + (end_time->tv_usec - start_time->tv_usec) / 1000.0;

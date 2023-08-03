@@ -18,7 +18,6 @@
 #include <math.h>
 
 #define PACKET_SIZE 64
-#define TIMEOUT 50000
 
 typedef struct s_packet
 {
@@ -28,13 +27,12 @@ typedef struct s_packet
 
 typedef struct s_ping
 {
-	int						packet_size;
-	int						timeout;
 	int						sockfd;
 	struct sockaddr_in		target_addr;
 	t_packet				packet;
 	struct timeval			start_time;
 	struct timeval			end_time;
+	struct timeval			timeout;
 	double					elapsed_time;
 	int						tries;
 	int						ttl;
@@ -55,7 +53,6 @@ typedef struct s_ping
 
 int					ping();
 void				display_stats();
-void				handle_alarm(int signal);
 char				*ft_strdup(const char *s1);
 char				**ft_split(char const *s, char c);
 unsigned short		calculate_checksum(void *buf, int len);
