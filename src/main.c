@@ -50,7 +50,7 @@ void	parse_args(int argc, char **argv)
 			if (parse_one_arg(arg[j]) == 1)
 			{
 				ft_free_split(arg);
-				free(ft_ping.ip_address);
+				free(ft_ping.fqdn);
 				exit(1);
 			}
 			j++;
@@ -69,7 +69,7 @@ int init_socket()
 	ft_ping.ttl = 64;
 	ft_ping.num_success = 0;
 	ft_ping.num_failures = 0;
-	ft_ping.rtt = malloc(ft_ping.num_pings * sizeof(double));
+	ft_ping.rtt = malloc(sizeof(double));
 
 	struct addrinfo hints = {0};
 	hints.ai_family = AF_INET;
@@ -77,7 +77,10 @@ int init_socket()
 	int status = getaddrinfo(ft_ping.fqdn, NULL, &hints, &result);
 	if (status != 0)
 	{
-		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
+		printf("ft_ping: unknown host\n");
+		free(ft_ping.ip_address);
+		free(ft_ping.fqdn);
+		free(ft_ping.rtt);
 		exit(1);
 	}
 	struct sockaddr_in *ipv4 = (struct sockaddr_in *)result->ai_addr;
@@ -89,6 +92,7 @@ int init_socket()
 	{
 		perror("socket");
 		free(ft_ping.ip_address);
+		free(ft_ping.fqdn);
 		free(ft_ping.rtt);
 		return 1;
 	}
@@ -97,6 +101,7 @@ int init_socket()
 		perror("setsockopt");
 		close(ft_ping.sockfd);
 		free(ft_ping.ip_address);
+		free(ft_ping.fqdn);
 		free(ft_ping.rtt);
 		return 1;
 	}
@@ -107,6 +112,7 @@ int init_socket()
 		perror("setsockopt");
 		close(ft_ping.sockfd);
 		free(ft_ping.ip_address);
+		free(ft_ping.fqdn);
 		free(ft_ping.rtt);
 		return 1;
 	}
@@ -140,6 +146,7 @@ int main(int argc, char **argv)
 		printf("  -v\t\tverbose output\n");
 		printf("  -?\t\tgive this help list\n");
 		printf("\n");
+		free(ft_ping.fqdn);
 		return (0);
 	}
 

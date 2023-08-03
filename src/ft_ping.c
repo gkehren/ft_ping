@@ -11,6 +11,7 @@ void handle_sigint(int signal)
 	}
 	close(ft_ping.sockfd);
 	free(ft_ping.ip_address);
+	free(ft_ping.fqdn);
 	free(ft_ping.rtt);
 	exit(0);
 }
@@ -48,6 +49,7 @@ int ping()
 			perror("sendto");
 			close(ft_ping.sockfd);
 			free(ft_ping.ip_address);
+			free(ft_ping.fqdn);
 			free(ft_ping.rtt);
 			return 1;
 		}
@@ -73,6 +75,7 @@ int ping()
 				perror("recvfrom");
 				close(ft_ping.sockfd);
 				free(ft_ping.ip_address);
+				free(ft_ping.fqdn);
 				free(ft_ping.rtt);
 				return 1;
 			}
@@ -94,6 +97,8 @@ int ping()
 				ft_ping.max_rtt = ft_ping.elapsed_time;
 			printf("%d bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n",
 				PACKET_SIZE, ft_ping.ip_address, ft_ping.tries, ip_header->ttl, ft_ping.elapsed_time);
+
+			ft_realloc(ft_ping.num_success + 1);
 		}
 		else
 		{
@@ -109,6 +114,7 @@ int ping()
 
 	close(ft_ping.sockfd);
 	free(ft_ping.ip_address);
+	free(ft_ping.fqdn);
 	free(ft_ping.rtt);
 	if (ft_ping.num_success > 0)
 		return 0;

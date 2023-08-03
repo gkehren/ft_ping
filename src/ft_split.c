@@ -17,7 +17,7 @@ char	*ft_strdup(const char *s1)
 	char	*s2;
 	int		i;
 
-	s2 = (char *)malloc(ft_strlen(s1) + 1 * sizeof(char));
+	s2 = (char *)malloc((ft_strlen(s1) + 1) * sizeof(char));
 	if (!s2)
 		return (NULL);
 	i = 0;
@@ -83,7 +83,7 @@ char	**ft_split(char const *s, char c)
 			j = 0;
 			while (s[i + j] != c && s[i + j] != '\0')
 				j++;
-			tab[k] = (char *)malloc(j + 1 * sizeof(char));
+			tab[k] = (char *)malloc((j + 1) * sizeof(char));
 			ft_split_word(tab[k], s + i, c);
 			i += j;
 			k++;

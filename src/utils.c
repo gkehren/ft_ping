@@ -12,6 +12,46 @@ int	ft_strcmp(const char *s1, const char *s2)
 	return ((unsigned char)s1[i] - (unsigned char)s2[i]);
 }
 
+void	ft_realloc(int size)
+{
+	double	*tmp;
+	int		i;
+
+	tmp = (double *)malloc(size * sizeof(double));
+	if (!tmp)
+	{
+		close(ft_ping.sockfd);
+		free(ft_ping.ip_address);
+		free(ft_ping.fqdn);
+		free(ft_ping.rtt);
+		exit(1);
+	}
+	i = 0;
+	while (i < ft_ping.num_success)
+	{
+		tmp[i] = ft_ping.rtt[i];
+		i++;
+	}
+	free(ft_ping.rtt);
+	ft_ping.rtt = (double *)malloc(size * sizeof(double));
+	if (!ft_ping.rtt)
+	{
+		close(ft_ping.sockfd);
+		free(ft_ping.ip_address);
+		free(ft_ping.fqdn);
+		free(ft_ping.rtt);
+		free(tmp);
+		exit(1);
+	}
+	i = 0;
+	while (i < ft_ping.num_success)
+	{
+		ft_ping.rtt[i] = tmp[i];
+		i++;
+	}
+	free(tmp);
+}
+
 void	display_stats()
 {
 	if (ft_ping.num_success > 1)

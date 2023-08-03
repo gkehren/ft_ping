@@ -54,6 +54,7 @@ typedef struct s_ping
 int					ping();
 void				display_stats();
 char				*ft_strdup(const char *s1);
+void				ft_realloc(int size);
 char				**ft_split(char const *s, char c);
 unsigned short		calculate_checksum(void *buf, int len);
 int					ft_strcmp(const char *s1, const char *s2);
