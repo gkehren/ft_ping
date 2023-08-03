@@ -18,11 +18,41 @@
 #include <math.h>
 
 #define PACKET_SIZE 64
-#define MAX_PACKET_SIZE 65535
 #define TIMEOUT 50000
 
+typedef struct s_packet
+{
+	struct icmphdr	header;
+	char			data[PACKET_SIZE - sizeof(struct icmphdr)];
+}	t_packet;
+
+typedef struct s_ping
+{
+	int				packet_size;
+	int				timeout;
+	int				sockfd;
+	struct			sockaddr_in target_addr;
+	t_packet		packet;
+	struct			timeval start_time;
+	struct			timeval end_time;
+	double			elapsed_time;
+	int				tries;
+	int				num_pings;
+	int				num_success;
+	int				num_failures;
+	double			min_rtt;
+	double			max_rtt;
+	double			total_rtt;
+	double			stddev_rtt;
+	double			*rtt;
+	char			*ip_address;
+	int				pid;
+	int				verbose;
+	int				help;
+}	t_ping;
+
+int	ft_strcmp(const char *s1, const char *s2);
 void				handle_alarm(int signal);
-void				ft_bzero(void *s, size_t n);
 unsigned short		calculate_checksum(void *buf, int len);
 double				get_elapsed_time(struct timeval *start_time, struct timeval *end_time);
 

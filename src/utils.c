@@ -1,17 +1,13 @@
 #include "../include/ft_ping.h"
 
-void ft_bzero(void *s, size_t n)
+int	ft_strcmp(const char *s1, const char *s2)
 {
-	size_t i;
-	char *ptr;
+	int	i;
+
 	i = 0;
-	ptr = (char *)s;
-	while (i < n)
-	{
-		ptr[i] = '\0';
+	while (s1[i] == s2[i] && s1[i] != '\0' && s2[i] != '\0')
 		i++;
-	}
-	s = (void *)ptr;
+	return ((unsigned char)s1[i] - (unsigned char)s2[i]);
 }
 
 unsigned short calculate_checksum(void *buf, int len) {
@@ -44,3 +40,4 @@ double get_elapsed_time(struct timeval *start_time, struct timeval *end_time)
 {
 	return (end_time->tv_sec - start_time->tv_sec) * 1000.0 + (end_time->tv_usec - start_time->tv_usec) / 1000.0;
 }
+
