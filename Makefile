@@ -29,7 +29,7 @@ all: ${NAME}
 
 ${NAME}: ${OBJ}
 	@echo ${CYAN} " - Compiling $@" $(RED)
-	@${CC} ${CFLAGS} ${SRC} -o ${NAME}
+	@${CC} ${CFLAGS} ${SRC} -o ${NAME} -lm
 	@echo $(GREEN) " - OK" $(EOC)
 
 ${CCHPATH}%.o: ${SRCPATH}%.c

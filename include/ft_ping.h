@@ -14,6 +14,8 @@
 #include <netinet/ip_icmp.h>
 #include <netdb.h>
 #include <errno.h>
+#include <float.h>
+#include <math.h>
 
 #define PACKET_SIZE 64
 #define MAX_PACKET_SIZE 65535

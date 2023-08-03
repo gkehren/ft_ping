@@ -8,6 +8,13 @@ typedef struct s_packet
 	char			data[PACKET_SIZE - sizeof(struct icmphdr)];
 }	t_packet;
 
+void handle_sigint(int signal)
+{
+	(void)signal;
+	printf("\n--- %s ping statistics ---\n", "JESUISUNEADDRESSIP");
+	exit(0);
+}
+
 int ping(const char* ip_address)
 {
 	uint8_t buffer[MAX_PACKET_SIZE];
@@ -19,6 +26,12 @@ int ping(const char* ip_address)
 	int tries = 0; // Number of tries
 	int num_pings = 5; // Number of pings
 	int num_success = 0; // Number of successful pings
+	int num_failures = 0; // Number of failed pings
+	double min_rtt = DBL_MAX; // Minimum round-trip time
+	double max_rtt = 0; // Maximum round-trip time
+	double total_rtt = 0; // Total round-trip time
+	double stddev_rtt = 0; // Standard deviation of round-trip time
+	double rtt[num_pings]; // Round-trip time for each ping
 
 	sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 	if (sockfd < 0)
@@ -40,7 +53,9 @@ int ping(const char* ip_address)
 
 
 	signal(SIGALRM, handle_alarm);
+	signal(SIGINT, handle_sigint);
 
+	printf("PING %s (%s): %lu data bytes\n", ip_address, ip_address, PACKET_SIZE - sizeof(struct icmphdr));
 	while (tries < num_pings)
 	{
 		memset(&packet, 0, sizeof(packet));
@@ -49,10 +64,8 @@ int ping(const char* ip_address)
 		packet.header.un.echo.id = htons(getpid());
 		packet.header.un.echo.sequence = htons(tries);
 		gettimeofday(&start_time, NULL);
-		//memset(packet.data, 0xA5, PACKET_SIZE - sizeof(struct icmphdr));
+		memset(packet.data, 0xA5, PACKET_SIZE - sizeof(struct icmphdr));
 		packet.header.checksum = calculate_checksum(&packet, sizeof(packet));
-
-		//printf("send PING %s (%s) %d(%lu) bytes of data.\n", ip_address, ip_address, PACKET_SIZE, PACKET_SIZE + sizeof(struct icmphdr) + sizeof(struct iphdr));
 
 		// Send the ICMP packet to the target address
 		if (sendto(sockfd, &packet, sizeof(packet), 0, (struct sockaddr *)&target_addr, sizeof(target_addr)) < 0)
@@ -71,6 +84,7 @@ int ping(const char* ip_address)
 			{
 				printf("Request timed out for icmp_seq %d\n", tries);
 				tries++;
+				num_failures++;
 				continue;
 			}
 			else
@@ -86,24 +100,46 @@ int ping(const char* ip_address)
 
 		if (icmp_header->type == ICMP_ECHOREPLY)
 		{
+			rtt[num_success] = elapsed_time;
 			gettimeofday(&end_time, NULL);
 			elapsed_time = get_elapsed_time(&start_time, &end_time);
+			num_success++;
+			total_rtt += elapsed_time;
+			if (elapsed_time < min_rtt)
+				min_rtt = elapsed_time;
+			if (elapsed_time > max_rtt)
+				max_rtt = elapsed_time;
 			printf("%d bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n",
 				PACKET_SIZE, ip_address, tries, ip_header->ttl, elapsed_time);
-			num_success++;
 		}
 		else
 		{
 			printf("Received ICMP packet with type %d\n", icmp_header->type);
+			num_failures++;
 		}
 
 		tries++;
-		//packet.sequence_number++;
-		sleep(1);
+		usleep(1000000);
 	}
 
+	double mean_rtt = total_rtt / num_success;
+	double sum_squared_diff = 0.0;
+	for (int i = 0; i < num_success; i++)
+	{
+		double diff = rtt[i] - mean_rtt;
+		sum_squared_diff += diff * diff;
+	}
+	double variance_rtt = sum_squared_diff / (double)num_success;
+	stddev_rtt = sqrt(variance_rtt);
+
+	// Print ping statistics
+	printf("--- %s ping statistics ---\n", ip_address);
+	printf("%d packets transmitted, %d packets received, %d%% packet loss\n",
+		tries, num_success, (tries - num_success) * 100 / tries);
+	if (num_success > 0)
+		printf("round-trip min/avg/max/stddev = %.3f/%.3f/%.3f/%.3f ms\n", min_rtt, total_rtt / num_success, max_rtt, stddev_rtt / num_success);
+
 	close(sockfd);
-	(void)start_time;
 	if (num_success > 0)
 		return 0;
 	else
