@@ -49,13 +49,23 @@ typedef struct s_ping
 	int						pid;
 	int						verbose;
 	int						help;
+	int						flood;
+	int						preload;
+	int						numeric;
+	int						w_timeout;
+	int						linger;
+	int						ignore_routing;
+	int						size_number;
+	int						tos;
+	int						ip_timestamp;
 }	t_ping;
 
 int					ping();
 void				display_stats();
-char				*ft_strdup(const char *s1);
 void				ft_realloc(int size);
-char				**ft_split(char const *s, char c);
+void				ft_free_split(char **arg);
+char				*ft_strdup(const char *s1);
+char				**ft_split(char **s, char c);
 unsigned short		calculate_checksum(void *buf, int len);
 int					ft_strcmp(const char *s1, const char *s2);
 double				get_elapsed_time(struct timeval *start_time, struct timeval *end_time);
