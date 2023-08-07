@@ -2,11 +2,11 @@ FILES:= main utils ft_split ft_ping
 NAME:= ft_ping
 
 # ------------------
-CC:=clang
+CC:=gcc
 SRCPATH:=src/
 INCLUDES:=
 CCHPATH:=obj/
-CFLAGS:=-Wall -Werror -Wextra
+CFLAGS:=-Wall -Werror -Wextra -g3
 # ==================
 
 # ----- Colors -----

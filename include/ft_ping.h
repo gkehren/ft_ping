@@ -17,12 +17,10 @@
 #include <float.h>
 #include <math.h>
 
-#define PACKET_SIZE 64
-
 typedef struct s_packet
 {
 	struct icmphdr	header;
-	char			data[PACKET_SIZE - sizeof(struct icmphdr)];
+	char			data[1];
 }	t_packet;
 
 typedef struct s_ping
@@ -56,6 +54,7 @@ typedef struct s_ping
 	int						linger;
 	int						ignore_routing;
 	int						size_number;
+	int						packet_size;
 	int						tos;
 	int						ip_timestamp;
 }	t_ping;

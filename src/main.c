@@ -141,7 +141,6 @@ void	parse_args(int argc, char **argv)
 	i = 0;
 	while (arg[i])
 	{
-		printf("arg[%d] = %s\n", i, arg[i]);
 		if (parse_one_arg(arg[i], arg[i + 1]) == 1)
 		{
 			ft_free_split(arg);
@@ -159,10 +158,10 @@ int init_socket()
 	ft_ping.num_pings = 5;
 	ft_ping.min_rtt = DBL_MAX;
 	ft_ping.tries = 0;
-	ft_ping.ttl = 64;
 	ft_ping.num_success = 0;
 	ft_ping.num_failures = 0;
 	ft_ping.rtt = malloc(sizeof(double));
+	ft_ping.packet_size = ft_ping.size_number + 8;
 
 	struct addrinfo hints = {0};
 	hints.ai_family = AF_INET;
@@ -192,8 +191,8 @@ int init_socket()
 	if (setsockopt(ft_ping.sockfd, IPPROTO_IP, IP_TTL, &ft_ping.ttl, sizeof(ft_ping.ttl)) < 0)
 	{
 		perror("setsockopt");
-		close(ft_ping.sockfd);
 		free(ft_ping.ip_address);
+		close(ft_ping.sockfd);
 		free(ft_ping.fqdn);
 		free(ft_ping.rtt);
 		return 1;
@@ -203,8 +202,8 @@ int init_socket()
 	if (setsockopt(ft_ping.sockfd, SOL_SOCKET, SO_RCVTIMEO, &ft_ping.timeout, sizeof(ft_ping.timeout)) < 0)
 	{
 		perror("setsockopt");
-		close(ft_ping.sockfd);
 		free(ft_ping.ip_address);
+		close(ft_ping.sockfd);
 		free(ft_ping.fqdn);
 		free(ft_ping.rtt);
 		return 1;
@@ -228,6 +227,9 @@ int main(int argc, char **argv)
 	ft_ping.verbose = 0;
 	ft_ping.help = 0;
 	ft_ping.fqdn = NULL;
+	ft_ping.ttl = 64;
+	ft_ping.size_number = 56;
+	ft_ping.packet_size = 64;
 
 	parse_args(argc, argv);
 

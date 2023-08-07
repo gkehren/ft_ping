@@ -18,7 +18,7 @@ void handle_sigint(int signal)
 
 int ping()
 {
-	uint8_t buffer[PACKET_SIZE];
+	uint8_t buffer[ft_ping.size_number];
 	struct iovec iov[1];
 	iov[0].iov_base = &buffer;
 	iov[0].iov_len = sizeof(buffer);
@@ -29,9 +29,9 @@ int ping()
 
 	signal(SIGINT, handle_sigint);
 	if (ft_ping.verbose == 1)
-		printf("PING %s (%s): %lu data bytes, id 0x%x = %u\n", ft_ping.fqdn, ft_ping.ip_address, PACKET_SIZE - sizeof(struct icmphdr), ft_ping.pid, ft_ping.pid);
+		printf("PING %s (%s): %d data bytes, id 0x%x = %u\n", ft_ping.fqdn, ft_ping.ip_address, ft_ping.size_number, ft_ping.pid, ft_ping.pid);
 	else
-		printf("PING %s (%s): %lu data bytes\n", ft_ping.fqdn, ft_ping.ip_address, PACKET_SIZE - sizeof(struct icmphdr));
+		printf("PING %s (%s): %d data bytes\n", ft_ping.fqdn, ft_ping.ip_address, ft_ping.size_number);
 	while (1)
 	{
 		memset(&ft_ping.packet, 0, sizeof(ft_ping.packet));
@@ -39,10 +39,10 @@ int ping()
 		ft_ping.packet.header.code = 0;
 		ft_ping.packet.header.un.echo.id = ft_ping.pid;
 		ft_ping.packet.header.un.echo.sequence = htons(ft_ping.tries);
-		gettimeofday(&ft_ping.start_time, NULL);
-		memset(ft_ping.packet.data, 0xA5, PACKET_SIZE - sizeof(struct icmphdr));
+		memset(ft_ping.packet.data, 0xA5, ft_ping.size_number);
 		ft_ping.packet.header.checksum = calculate_checksum(&ft_ping.packet, sizeof(ft_ping.packet));
 
+		gettimeofday(&ft_ping.start_time, NULL);
 		// Send the ICMP packet to the target address
 		if (sendto(ft_ping.sockfd, &ft_ping.packet, sizeof(ft_ping.packet), 0, (struct sockaddr *)&ft_ping.target_addr, sizeof(ft_ping.target_addr)) < 0)
 		{
@@ -96,7 +96,7 @@ int ping()
 			if (ft_ping.elapsed_time > ft_ping.max_rtt)
 				ft_ping.max_rtt = ft_ping.elapsed_time;
 			printf("%d bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n",
-				PACKET_SIZE, ft_ping.ip_address, ft_ping.tries, ip_header->ttl, ft_ping.elapsed_time);
+				ft_ping.size_number, ft_ping.ip_address, ft_ping.tries, ip_header->ttl, ft_ping.elapsed_time);
 
 			ft_realloc(ft_ping.num_success + 1);
 		}
