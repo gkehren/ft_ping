@@ -21,6 +21,8 @@ void	ft_realloc(int size)
 	if (!tmp)
 	{
 		close(ft_ping.sockfd);
+		free(ft_ping.packet->data);
+		free(ft_ping.packet);
 		free(ft_ping.ip_address);
 		free(ft_ping.fqdn);
 		free(ft_ping.rtt);
@@ -37,6 +39,8 @@ void	ft_realloc(int size)
 	if (!ft_ping.rtt)
 	{
 		close(ft_ping.sockfd);
+		free(ft_ping.packet->data);
+		free(ft_ping.packet);
 		free(ft_ping.ip_address);
 		free(ft_ping.fqdn);
 		free(ft_ping.rtt);
@@ -77,24 +81,26 @@ void	display_stats()
 		printf("round-trip min/avg/max/stddev = %.3f/%.3f/%.3f/%.3f ms\n", ft_ping.min_rtt, ft_ping.total_rtt / ft_ping.num_success, ft_ping.max_rtt, ft_ping.stddev_rtt / ft_ping.num_success);
 }
 
-unsigned short calculate_checksum(void *buf, int len) {
-	unsigned short *ptr = buf;
-	unsigned int sum = 0;
-	unsigned short result;
+unsigned short calculate_checksum(struct icmphdr *icmp_header, int len)
+{
+	unsigned long sum = 0;
+	unsigned short *buf = (unsigned short *)icmp_header;
 
-	for (sum = 0; len > 1; len -= 2) {
-		sum += *ptr++;
+	while (len > 1)
+	{
+		sum += *buf++;
+		len -= 2;
 	}
 
-	if (len == 1) {
-		sum += *(unsigned char*)ptr;
+	if (len == 1)
+	{
+		sum += *(unsigned char *)buf;
 	}
 
 	sum = (sum >> 16) + (sum & 0xFFFF);
 	sum += (sum >> 16);
-	result = ~sum;
 
-	return result;
+	return (unsigned short)(~sum);
 }
 
 double get_elapsed_time(struct timeval *start_time, struct timeval *end_time)

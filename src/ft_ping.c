@@ -6,10 +6,24 @@ void handle_sigint(int signal)
 {
 	(void)signal;
 	if (ft_ping.tries > 0)
-	{
 		display_stats();
-	}
 	close(ft_ping.sockfd);
+	free(ft_ping.packet->data);
+	free(ft_ping.packet);
+	free(ft_ping.ip_address);
+	free(ft_ping.fqdn);
+	free(ft_ping.rtt);
+	exit(0);
+}
+
+void handle_sigalrm(int signal)
+{
+	(void)signal;
+	if (ft_ping.tries > 0)
+		display_stats();
+	close(ft_ping.sockfd);
+	free(ft_ping.packet->data);
+	free(ft_ping.packet);
 	free(ft_ping.ip_address);
 	free(ft_ping.fqdn);
 	free(ft_ping.rtt);
@@ -28,26 +42,43 @@ int ping()
 	msg.msg_iovlen = 1;
 
 	signal(SIGINT, handle_sigint);
+	if (ft_ping.w_timeout > 0)
+	{
+		signal(SIGALRM, handle_sigalrm);
+		alarm(ft_ping.w_timeout);
+	}
+
 	if (ft_ping.verbose == 1)
-		printf("PING %s (%s): %d data bytes, id 0x%x = %u\n", ft_ping.fqdn, ft_ping.ip_address, ft_ping.size_number, ft_ping.pid, ft_ping.pid);
+		printf("PING %s (%s): %d data bytes, id 0x%x = %u\n", ft_ping.numeric == 0 ? ft_ping.fqdn : ft_ping.ip_address, ft_ping.ip_address, ft_ping.size_number, ft_ping.pid, ft_ping.pid);
 	else
-		printf("PING %s (%s): %d data bytes\n", ft_ping.fqdn, ft_ping.ip_address, ft_ping.size_number);
+		printf("PING %s (%s): %d data bytes\n", ft_ping.numeric == 0 ? ft_ping.fqdn : ft_ping.ip_address, ft_ping.ip_address, ft_ping.size_number);
+
+	ft_ping.packet = malloc(sizeof(ft_ping.packet));
+	ft_ping.packet->data = malloc(ft_ping.size_number);
+
 	while (1)
 	{
-		memset(&ft_ping.packet, 0, sizeof(ft_ping.packet));
-		ft_ping.packet.header.type = ICMP_ECHO;
-		ft_ping.packet.header.code = 0;
-		ft_ping.packet.header.un.echo.id = ft_ping.pid;
-		ft_ping.packet.header.un.echo.sequence = htons(ft_ping.tries);
-		memset(ft_ping.packet.data, 0xA5, ft_ping.size_number);
-		ft_ping.packet.header.checksum = calculate_checksum(&ft_ping.packet, sizeof(ft_ping.packet));
+		for (int i = 0; i < ft_ping.packet_size; i++)
+		{
+			ft_ping.packet->data[i] = 0xA;
+			printf("%02x ", ft_ping.packet->data[i]);
+		}
+		printf("\n");
+		ft_ping.packet->header.type = ICMP_ECHO;
+		ft_ping.packet->header.code = 0;
+		ft_ping.packet->header.un.echo.id = ft_ping.pid;
+		ft_ping.packet->header.un.echo.sequence = ft_ping.tries;
+		ft_ping.packet->header.checksum = 0;
+		ft_ping.packet->header.checksum = calculate_checksum(&ft_ping.packet->header, sizeof(struct icmphdr));
 
 		gettimeofday(&ft_ping.start_time, NULL);
 		// Send the ICMP packet to the target address
-		if (sendto(ft_ping.sockfd, &ft_ping.packet, sizeof(ft_ping.packet), 0, (struct sockaddr *)&ft_ping.target_addr, sizeof(ft_ping.target_addr)) < 0)
+		if (sendto(ft_ping.sockfd, ft_ping.packet, ft_ping.packet_size, 0, (struct sockaddr *)&ft_ping.target_addr, sizeof(ft_ping.target_addr)) < 0)
 		{
 			perror("sendto");
 			close(ft_ping.sockfd);
+			free(ft_ping.packet->data);
+			free(ft_ping.packet);
 			free(ft_ping.ip_address);
 			free(ft_ping.fqdn);
 			free(ft_ping.rtt);
@@ -74,6 +105,8 @@ int ping()
 			{
 				perror("recvfrom");
 				close(ft_ping.sockfd);
+				free(ft_ping.packet->data);
+				free(ft_ping.packet);
 				free(ft_ping.ip_address);
 				free(ft_ping.fqdn);
 				free(ft_ping.rtt);
@@ -113,6 +146,8 @@ int ping()
 	display_stats();
 
 	close(ft_ping.sockfd);
+	free(ft_ping.packet->data);
+	free(ft_ping.packet);
 	free(ft_ping.ip_address);
 	free(ft_ping.fqdn);
 	free(ft_ping.rtt);

@@ -76,12 +76,22 @@ int parse_one_arg(char *arg, char *next_arg)
 	{
 		if (get_next_arg(next_arg) == 1)
 			return (1);
+		if (ft_atoi(next_arg) <= 0)
+		{
+			printf("ft_ping: option value too small: '%s'\n", next_arg);
+			return (1);
+		}
 		ft_ping.w_timeout = ft_atoi(next_arg);
 	}
 	else if (ft_strcmp(arg, "-W") == 0)
 	{
 		if (get_next_arg(next_arg) == 1)
 			return (1);
+		if (ft_atoi(next_arg) <= 0)
+		{
+			printf("ft_ping: option value too small: '%s'\n", next_arg);
+			return (1);
+		}
 		ft_ping.linger = ft_atoi(next_arg);
 	}
 	else if (ft_strcmp(arg, "-p") == 0)
@@ -192,21 +202,59 @@ int init_socket()
 	{
 		perror("setsockopt");
 		free(ft_ping.ip_address);
+		free(ft_ping.packet->data);
+		free(ft_ping.packet);
 		close(ft_ping.sockfd);
 		free(ft_ping.fqdn);
 		free(ft_ping.rtt);
 		return 1;
 	}
-	ft_ping.timeout.tv_sec = 1;
+	if (ft_ping.linger > 0)
+		ft_ping.timeout.tv_sec = ft_ping.linger;
+	else
+		ft_ping.timeout.tv_sec = 1;
 	ft_ping.timeout.tv_usec = 0;
 	if (setsockopt(ft_ping.sockfd, SOL_SOCKET, SO_RCVTIMEO, &ft_ping.timeout, sizeof(ft_ping.timeout)) < 0)
 	{
 		perror("setsockopt");
 		free(ft_ping.ip_address);
+		free(ft_ping.packet->data);
+		free(ft_ping.packet);
 		close(ft_ping.sockfd);
 		free(ft_ping.fqdn);
 		free(ft_ping.rtt);
 		return 1;
+	}
+
+	if (ft_ping.ignore_routing == 1)
+	{
+		int on = 1;
+		if (setsockopt(ft_ping.sockfd, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on)) < 0)
+		{
+			perror("setsockopt");
+			free(ft_ping.ip_address);
+			free(ft_ping.packet->data);
+			free(ft_ping.packet);
+			close(ft_ping.sockfd);
+			free(ft_ping.fqdn);
+			free(ft_ping.rtt);
+			return 1;
+		}
+	}
+
+	if (ft_ping.tos > 0)
+	{
+		if (setsockopt(ft_ping.sockfd, IPPROTO_IP, IP_TOS, &ft_ping.tos, sizeof(ft_ping.tos)) < 0)
+		{
+			perror("setsockopt");
+			free(ft_ping.ip_address);
+			free(ft_ping.packet->data);
+			free(ft_ping.packet);
+			close(ft_ping.sockfd);
+			free(ft_ping.fqdn);
+			free(ft_ping.rtt);
+			return 1;
+		}
 	}
 
 	memset(&ft_ping.target_addr, 0, sizeof(ft_ping.target_addr));
@@ -230,6 +278,12 @@ int main(int argc, char **argv)
 	ft_ping.ttl = 64;
 	ft_ping.size_number = 56;
 	ft_ping.packet_size = 64;
+	ft_ping.linger = 0;
+	ft_ping.w_timeout = 0;
+	ft_ping.numeric = 0;
+	ft_ping.ignore_routing = 0;
+	ft_ping.tos = 0;
+	ft_ping.pattern = 0xA;
 
 	parse_args(argc, argv);
 
