@@ -66,7 +66,7 @@ void				ft_realloc(int size);
 void				ft_free_split(char **arg);
 char				*ft_strdup(const char *s1);
 char				**ft_split(char **s, char c);
-unsigned short		calculate_checksum(struct icmphdr *icmp_header, int len);
+uint16_t			calculate_checksum(void *data, int length);
 int					ft_strcmp(const char *s1, const char *s2);
 double				get_elapsed_time(struct timeval *start_time, struct timeval *end_time);
 

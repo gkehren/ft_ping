@@ -53,23 +53,20 @@ int ping()
 	else
 		printf("PING %s (%s): %d data bytes\n", ft_ping.numeric == 0 ? ft_ping.fqdn : ft_ping.ip_address, ft_ping.ip_address, ft_ping.size_number);
 
-	ft_ping.packet = malloc(sizeof(ft_ping.packet));
+	ft_ping.packet = malloc(ft_ping.packet_size);
+	memset(ft_ping.packet, 0, ft_ping.packet_size);
 	ft_ping.packet->data = malloc(ft_ping.size_number);
 
 	while (1)
 	{
-		for (int i = 0; i < ft_ping.packet_size; i++)
-		{
-			ft_ping.packet->data[i] = 0xA;
-			printf("%02x ", ft_ping.packet->data[i]);
-		}
-		printf("\n");
+		for (int i = 0; i < ft_ping.size_number; i++)
+			ft_ping.packet->data[i] = 0xA5;
 		ft_ping.packet->header.type = ICMP_ECHO;
 		ft_ping.packet->header.code = 0;
 		ft_ping.packet->header.un.echo.id = ft_ping.pid;
 		ft_ping.packet->header.un.echo.sequence = ft_ping.tries;
 		ft_ping.packet->header.checksum = 0;
-		ft_ping.packet->header.checksum = calculate_checksum(&ft_ping.packet->header, sizeof(struct icmphdr));
+		ft_ping.packet->header.checksum = calculate_checksum(ft_ping.packet, ft_ping.packet_size);
 
 		gettimeofday(&ft_ping.start_time, NULL);
 		// Send the ICMP packet to the target address
