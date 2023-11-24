@@ -2,13 +2,34 @@
 
 extern t_ping ft_ping;
 
+const char *get_icmp_type(uint8_t type)
+{
+	switch (type)
+	{
+		case 0: return "Echo Reply";
+		case 3: return "Destination Host Unreachable";
+		case 4: return "Source Quench";
+		case 5: return "Redirect Message";
+		case 8: return "Echo Request";
+		case 9: return "Router Advertisement";
+		case 10: return "Router Solicitation";
+		case 11: return "Time Exceeded";
+		case 12: return "Parameter Problem: Bad IP header";
+		case 13: return "Timestamp";
+		case 14: return "Timestamp Reply";
+		case 15: return "Information Request";
+		case 16: return "Information Reply";
+		case 17: return "Address Mask Request";
+		case 18: return "Address Mask Reply";
+		default: return "Unknown";
+	}
+}
+
 void handle_sigint(int signal)
 {
 	(void)signal;
 	if (ft_ping.tries > 0)
-	{
 		display_stats();
-	}
 	close(ft_ping.sockfd);
 	free(ft_ping.ip_address);
 	free(ft_ping.fqdn);
@@ -96,13 +117,13 @@ int ping()
 			if (ft_ping.elapsed_time > ft_ping.max_rtt)
 				ft_ping.max_rtt = ft_ping.elapsed_time;
 			printf("%d bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n",
-				ft_ping.size_number, ft_ping.ip_address, ft_ping.tries, ip_header->ttl, ft_ping.elapsed_time);
+				ft_ping.size_number + 8, ft_ping.ip_address, ft_ping.tries, ip_header->ttl, ft_ping.elapsed_time);
 
 			ft_realloc(ft_ping.num_success + 1);
 		}
 		else
 		{
-			printf("Received ICMP packet with type %d\n", icmp_header->type);
+			printf("%d bytes from %s: %s\n", ft_ping.size_number, ft_ping.ip_address, get_icmp_type(icmp_header->type));
 			ft_ping.num_failures++;
 		}
 

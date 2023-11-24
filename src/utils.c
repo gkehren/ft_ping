@@ -56,7 +56,6 @@ void	display_stats()
 {
 	if (ft_ping.num_success > 1)
 	{
-		// TODO stddev is wrong
 		double mean_rtt = ft_ping.total_rtt / ft_ping.num_success;
 		double sum_squared_diff = 0.0;
 		for (int i = 0; i < ft_ping.num_success; i++)
