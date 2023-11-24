@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_split.c                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: gkehren <gkehren@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/11/24 23:18:54 by gkehren           #+#    #+#             */
+/*   Updated: 2023/11/24 23:19:55 by gkehren          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../include/ft_ping.h"
 
 size_t	ft_strlen(const char *s)
@@ -34,11 +46,13 @@ static int	ft_count_word(char **strs, char c)
 {
 	int	i;
 	int	trigger;
+	int	j;
+	int	k;
 
 	i = 0;
 	trigger = 0;
-	int j = 0;
-	int k = 0;
+	j = 0;
+	k = 0;
 	while (strs[j])
 	{
 		while (strs[j][k])
@@ -84,6 +98,7 @@ char	**ft_split(char **s, char c)
 	int		i;
 	int		j;
 	int		k;
+	int		start;
 
 	tab = (char **)malloc(sizeof(char *) * (ft_count_word(s, c) + 2));
 	if (!tab)
@@ -99,7 +114,7 @@ char	**ft_split(char **s, char c)
 				j++;
 			else
 			{
-				int start = j;
+				start = j;
 				while (s[i][j] != c && s[i][j] != '\0')
 					j++;
 				tab[k] = (char *)malloc(sizeof(char) * (j - start + 1));
