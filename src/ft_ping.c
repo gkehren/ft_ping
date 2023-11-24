@@ -155,7 +155,7 @@ int ping()
 		}
 		else
 		{
-			printf("%d bytes from %s: %s\n", ft_ping.size_number, ft_ping.ip_address, get_icmp_type(icmp_header->type));
+			printf("%d bytes from %s: %s\n", ft_ping.size_number + 8, ft_ping.ip_address, get_icmp_type(icmp_header->type));
 			ft_ping.num_failures++;
 		}
 
