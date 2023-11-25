@@ -1,4 +1,4 @@
-FILES:= main utils ft_split ft_ping
+FILES:= main utils ft_split ft_ping display sig ft_str socket parse_arg
 NAME:= ft_ping
 
 # ------------------

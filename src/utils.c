@@ -6,7 +6,7 @@
 /*   By: gkehren <gkehren@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 23:31:33 by gkehren           #+#    #+#             */
-/*   Updated: 2023/11/25 04:22:07 by gkehren          ###   ########.fr       */
+/*   Updated: 2023/11/25 15:18:43 by gkehren          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,45 +62,6 @@ void	ft_realloc(int size)
 		i++;
 	}
 	free(tmp);
-}
-
-void	compute_stats(void)
-{
-	double	mean_rtt;
-	double	sum_squared_diff;
-	double	variance_rtt;
-	double	diff;
-	int		i;
-
-	if (g_ping.num_success > 1)
-	{
-		mean_rtt = g_ping.total_rtt / g_ping.num_success;
-		sum_squared_diff = 0.0;
-		i = 0;
-		while (i < g_ping.num_success)
-		{
-			diff = g_ping.rtt[i] - mean_rtt;
-			sum_squared_diff += diff * diff;
-			i++;
-		}
-		variance_rtt = sum_squared_diff / (double)g_ping.num_success;
-		g_ping.stddev_rtt = sqrt(variance_rtt);
-	}
-	else
-		g_ping.stddev_rtt = 0.0;
-}
-
-void	display_stats(void)
-{
-	compute_stats();
-	printf("--- %s ping statistics ---\n", g_ping.ip_address);
-	printf("%d packets transmitted, %d packets received, %d%% packet loss\n",
-		g_ping.tries, g_ping.num_success,
-		(g_ping.tries - g_ping.num_success) * 100 / g_ping.tries);
-	if (g_ping.num_success > 0)
-		printf("round-trip min/avg/max/stddev = %.3f/%.3f/%.3f/%.3f ms\n",
-			g_ping.min_rtt, g_ping.total_rtt / g_ping.num_success,
-			g_ping.max_rtt, g_ping.stddev_rtt / g_ping.num_success);
 }
 
 uint16_t	calculate_checksum(void *data, int length)

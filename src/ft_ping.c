@@ -6,7 +6,7 @@
 /*   By: gkehren <gkehren@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 23:31:45 by gkehren           #+#    #+#             */
-/*   Updated: 2023/11/25 03:37:50 by gkehren          ###   ########.fr       */
+/*   Updated: 2023/11/25 16:59:38 by gkehren          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,114 +14,17 @@
 
 extern t_ping	g_ping;
 
-const char	*get_icmp_type(uint8_t type)
-{
-	const char	*icmp_types[] = {
-	[0] = "Echo Reply",
-	[3] = "Destination Host Unreachable",
-	[4] = "Source Quench",
-	[5] = "Redirect Message",
-	[8] = "Echo Request",
-	[9] = "Router Advertisement",
-	[10] = "Router Solicitation",
-	[11] = "Time Exceeded",
-	[12] = "Parameter Problem: Bad IP header",
-	[13] = "Timestamp",
-	[14] = "Timestamp Reply",
-	[15] = "Information Request",
-	[16] = "Information Reply",
-	[17] = "Address Mask Request",
-	[18] = "Address Mask Reply",
-	};
-
-	if (type <= 18)
-		return (icmp_types[type]);
-	else
-		return ("Unknown");
-}
-
-void	handle_sigint(int signal)
-{
-	(void)signal;
-	if (g_ping.tries > 0)
-		display_stats();
-	close(g_ping.sockfd);
-	free(g_ping.packet->data);
-	free(g_ping.packet);
-	free(g_ping.ip_address);
-	free(g_ping.fqdn);
-	free(g_ping.rtt);
-	exit(0);
-}
-
-void	handle_sigalrm(int signal)
-{
-	(void)signal;
-	if (g_ping.tries > 0)
-		display_stats();
-	close(g_ping.sockfd);
-	free(g_ping.packet->data);
-	free(g_ping.packet);
-	free(g_ping.ip_address);
-	free(g_ping.fqdn);
-	free(g_ping.rtt);
-	exit(0);
-}
-
-int	error_handler(const char *str, void *ptr)
-{
-	if (str != NULL)
-		perror(str);
-	if (ptr != NULL)
-		free(ptr);
-	close(g_ping.sockfd);
-	free(g_ping.packet->data);
-	free(g_ping.packet);
-	free(g_ping.ip_address);
-	free(g_ping.fqdn);
-	free(g_ping.rtt);
-	return (1);
-}
-
-void	display_packet(struct iphdr *ip_header, struct icmphdr *icmp_header)
-{
-	if (icmp_header == NULL || ip_header == NULL)
-		return ;
-	if (icmp_header->type == ICMP_ECHOREPLY)
-	{
-		g_ping.rtt[g_ping.num_success] = g_ping.elapsed_time;
-		gettimeofday(&g_ping.end_time, NULL);
-		g_ping.elapsed_time = get_elapsed_time(&g_ping.start_time,
-				&g_ping.end_time);
-		g_ping.num_success++;
-		g_ping.total_rtt += g_ping.elapsed_time;
-		if (g_ping.elapsed_time < g_ping.min_rtt)
-			g_ping.min_rtt = g_ping.elapsed_time;
-		if (g_ping.elapsed_time > g_ping.max_rtt)
-			g_ping.max_rtt = g_ping.elapsed_time;
-		printf("%d bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n",
-			g_ping.size_number + 8, g_ping.ip_address, g_ping.tries,
-			ip_header->ttl, g_ping.elapsed_time);
-		ft_realloc(g_ping.num_success + 1);
-	}
-	else
-	{
-		printf("%d bytes from %s: %s\n", g_ping.size_number + 8,
-			g_ping.ip_address, get_icmp_type(icmp_header->type));
-		g_ping.num_failures++;
-	}
-}
-
 void	init_packet(void)
 {
 	int	i;
 
 	i = 0;
-	while (i < g_ping.size_number)
+	while (i < g_ping.size_number - 1)
 	{
-		g_ping.packet->data[i] = 0xA5;
+		g_ping.packet->data[i] = g_ping.pattern;
 		i++;
 	}
+	g_ping.packet->data[i] = '\0';
 	g_ping.packet->header.type = ICMP_ECHO;
 	g_ping.packet->header.code = 0;
 	g_ping.packet->header.un.echo.id = g_ping.pid;
@@ -195,29 +98,6 @@ int	end_of_pings(void)
 		return (0);
 	else
 		return (1);
-}
-
-void	display_address(void)
-{
-	if (g_ping.verbose == 1)
-	{
-		if (g_ping.numeric == 0)
-			printf("PING %s (%s): %d data bytes, id 0x%x = %u\n", g_ping.fqdn,
-				g_ping.ip_address, g_ping.size_number, g_ping.pid, g_ping.pid);
-		else
-			printf("PING %s (%s): %d data bytes, id 0x%x = %u\n",
-				g_ping.ip_address, g_ping.ip_address, g_ping.size_number,
-				g_ping.pid, g_ping.pid);
-	}
-	else
-	{
-		if (g_ping.numeric == 0)
-			printf("PING %s (%s): %d data bytes\n",
-				g_ping.fqdn, g_ping.ip_address, g_ping.size_number);
-		else
-			printf("PING %s (%s): %d data bytes\n", g_ping.ip_address,
-				g_ping.ip_address, g_ping.size_number);
-	}
 }
 
 int	ping(void)
