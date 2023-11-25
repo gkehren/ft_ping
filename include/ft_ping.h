@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   ft_ping.h                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: gkehren <gkehren@student.42.fr>            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/11/25 02:28:45 by gkehren           #+#    #+#             */
+/*   Updated: 2023/11/25 02:30:29 by gkehren          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #ifndef FT_PING_H
 # define FT_PING_H
 
@@ -60,14 +72,15 @@ typedef struct s_ping
 	int						pattern;
 }	t_ping;
 
-int					ping();
-void				display_stats();
+int					ping(void);
+void				display_stats(void);
 void				ft_realloc(int size);
 void				ft_free_split(char **arg);
 char				*ft_strdup(const char *s1);
 char				**ft_split(char **s, char c);
 uint16_t			calculate_checksum(void *data, int length);
 int					ft_strcmp(const char *s1, const char *s2);
-double				get_elapsed_time(struct timeval *start_time, struct timeval *end_time);
+double				get_elapsed_time(struct timeval *start_time,
+						struct timeval *end_time);
 
 #endif

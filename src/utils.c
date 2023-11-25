@@ -6,7 +6,7 @@
 /*   By: gkehren <gkehren@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 23:31:33 by gkehren           #+#    #+#             */
-/*   Updated: 2023/11/25 00:01:44 by gkehren          ###   ########.fr       */
+/*   Updated: 2023/11/25 04:22:07 by gkehren          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,19 @@ int	ft_strcmp(const char *s1, const char *s2)
 	return ((unsigned char)s1[i] - (unsigned char)s2[i]);
 }
 
+void	free_realloc(void *ptr)
+{
+	if (ptr != NULL)
+		free(ptr);
+	close(g_ping.sockfd);
+	free(g_ping.packet->data);
+	free(g_ping.packet);
+	free(g_ping.ip_address);
+	free(g_ping.fqdn);
+	free(g_ping.rtt);
+	exit(1);
+}
+
 void	ft_realloc(int size)
 {
 	double	*tmp;
@@ -31,15 +44,7 @@ void	ft_realloc(int size)
 
 	tmp = (double *)malloc(size * sizeof(double));
 	if (!tmp)
-	{
-		close(g_ping.sockfd);
-		free(g_ping.packet->data);
-		free(g_ping.packet);
-		free(g_ping.ip_address);
-		free(g_ping.fqdn);
-		free(g_ping.rtt);
-		exit(1);
-	}
+		free_realloc(NULL);
 	i = 0;
 	while (i < g_ping.num_success)
 	{
@@ -49,16 +54,7 @@ void	ft_realloc(int size)
 	free(g_ping.rtt);
 	g_ping.rtt = (double *)malloc(size * sizeof(double));
 	if (!g_ping.rtt)
-	{
-		close(g_ping.sockfd);
-		free(g_ping.packet->data);
-		free(g_ping.packet);
-		free(g_ping.ip_address);
-		free(g_ping.fqdn);
-		free(g_ping.rtt);
-		free(tmp);
-		exit(1);
-	}
+		free_realloc(tmp);
 	i = 0;
 	while (i < g_ping.num_success)
 	{
@@ -68,7 +64,7 @@ void	ft_realloc(int size)
 	free(tmp);
 }
 
-void	display_stats(void)
+void	compute_stats(void)
 {
 	double	mean_rtt;
 	double	sum_squared_diff;
@@ -92,6 +88,11 @@ void	display_stats(void)
 	}
 	else
 		g_ping.stddev_rtt = 0.0;
+}
+
+void	display_stats(void)
+{
+	compute_stats();
 	printf("--- %s ping statistics ---\n", g_ping.ip_address);
 	printf("%d packets transmitted, %d packets received, %d%% packet loss\n",
 		g_ping.tries, g_ping.num_success,

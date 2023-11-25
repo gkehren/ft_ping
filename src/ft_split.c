@@ -6,7 +6,7 @@
 /*   By: gkehren <gkehren@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 23:18:54 by gkehren           #+#    #+#             */
-/*   Updated: 2023/11/24 23:19:55 by gkehren          ###   ########.fr       */
+/*   Updated: 2023/11/25 04:15:38 by gkehren          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,40 +92,58 @@ size_t	ft_strlcpy(char *dst, const char *src, size_t size)
 	return (i);
 }
 
+char	*ft_strndup(const char *s, size_t n)
+{
+	size_t	len;
+	char	*dup;
+	int		i;
+
+	len = 0;
+	while (s[len] && len < n)
+		len++;
+	dup = (char *)malloc(len + 1);
+	if (!dup)
+		return (NULL);
+	i = 0;
+	while (s[i] && i < (int)n)
+	{
+		dup[i] = s[i];
+		i++;
+	}
+	dup[len] = '\0';
+	return (dup);
+}
+
+char	*ft_extract_substring(char *s, char c, int *start, int *end)
+{
+	while (s[*start] && s[*start] == c)
+		(*start)++;
+	*end = *start;
+	while (s[*end] && s[*end] != c)
+		(*end)++;
+	return (ft_strndup(s + *start, *end - *start));
+}
+
 char	**ft_split(char **s, char c)
 {
 	char	**tab;
 	int		i;
 	int		j;
 	int		k;
-	int		start;
+	int		end;
 
 	tab = (char **)malloc(sizeof(char *) * (ft_count_word(s, c) + 2));
-	if (!tab)
-		return (NULL);
 	i = 1;
 	k = 0;
-	while (s[i] != NULL)
+	while (s[i])
 	{
 		j = 0;
-		while (s[i][j] != '\0')
+		while (s[i][j])
 		{
-			if (s[i][j] == c)
-				j++;
-			else
-			{
-				start = j;
-				while (s[i][j] != c && s[i][j] != '\0')
-					j++;
-				tab[k] = (char *)malloc(sizeof(char) * (j - start + 1));
-				if (!tab[k])
-				{
-					ft_free_split(tab);
-					return (NULL);
-				}
-				ft_strlcpy(tab[k], s[i] + start, j - start + 1);
-				k++;
-			}
+			tab[k] = ft_extract_substring(s[i], c, &j, &end);
+			if (!tab[k++])
+				return (ft_free_split(tab), NULL);
+			j = end;
 		}
 		i++;
 	}
