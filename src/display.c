@@ -6,7 +6,7 @@
 /*   By: gkehren <gkehren@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/25 15:17:44 by gkehren           #+#    #+#             */
-/*   Updated: 2023/11/25 15:19:49 by gkehren          ###   ########.fr       */
+/*   Updated: 2024/02/05 18:56:03 by gkehren          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,22 +73,13 @@ void	display_address(void)
 {
 	if (g_ping.verbose == 1)
 	{
-		if (g_ping.numeric == 0)
-			printf("PING %s (%s): %d data bytes, id 0x%x = %u\n", g_ping.fqdn,
-				g_ping.ip_address, g_ping.size_number, g_ping.pid, g_ping.pid);
-		else
-			printf("PING %s (%s): %d data bytes, id 0x%x = %u\n",
-				g_ping.ip_address, g_ping.ip_address, g_ping.size_number,
-				g_ping.pid, g_ping.pid);
+		printf("PING %s (%s): %d data bytes, id 0x%x = %u\n", g_ping.fqdn,
+			g_ping.ip_address, g_ping.size_number, g_ping.pid, g_ping.pid);
 	}
 	else
 	{
-		if (g_ping.numeric == 0)
-			printf("PING %s (%s): %d data bytes\n",
-				g_ping.fqdn, g_ping.ip_address, g_ping.size_number);
-		else
-			printf("PING %s (%s): %d data bytes\n", g_ping.ip_address,
-				g_ping.ip_address, g_ping.size_number);
+		printf("PING %s (%s): %d data bytes\n",
+			g_ping.fqdn, g_ping.ip_address, g_ping.size_number);
 	}
 }
 

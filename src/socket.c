@@ -6,7 +6,7 @@
 /*   By: gkehren <gkehren@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/25 15:59:31 by gkehren           #+#    #+#             */
-/*   Updated: 2023/11/25 16:17:30 by gkehren          ###   ########.fr       */
+/*   Updated: 2024/02/05 20:56:18 by gkehren          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,37 +31,19 @@ void	set_socket_option(void)
 	if (setsockopt(g_ping.sockfd, IPPROTO_IP, IP_TTL,
 			&g_ping.ttl, sizeof(g_ping.ttl)) < 0)
 		free_init("setsockopt");
-	if (g_ping.linger > 0)
-		g_ping.timeout.tv_sec = g_ping.linger;
-	else
-		g_ping.timeout.tv_sec = 1;
+	g_ping.timeout.tv_sec = 1;
 	g_ping.timeout.tv_usec = 0;
 	if (setsockopt(g_ping.sockfd, SOL_SOCKET, SO_RCVTIMEO,
 			&g_ping.timeout, sizeof(g_ping.timeout)) < 0)
 		free_init("setsockopt");
-	if (g_ping.tos > 0)
-	{
-		if (setsockopt(g_ping.sockfd, IPPROTO_IP, IP_TOS,
-				&g_ping.tos, sizeof(g_ping.tos)) < 0)
-			free_init("setsockopt");
-	}
 }
 
 void	init_socket2(void)
 {
-	int					status;
-
 	g_ping.sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 	if (g_ping.sockfd < 0)
 		free_init("socket");
 	set_socket_option();
-	if (g_ping.ignore_routing == 1)
-	{
-		status = 1;
-		if (setsockopt(g_ping.sockfd, IPPROTO_IP, IP_HDRINCL,
-				&status, sizeof(status)) < 0)
-			free_init("setsockopt");
-	}
 	memset(&g_ping.target_addr, 0, sizeof(g_ping.target_addr));
 	g_ping.target_addr.sin_family = AF_INET;
 	g_ping.target_addr.sin_addr.s_addr = inet_addr(g_ping.ip_address);
@@ -69,13 +51,17 @@ void	init_socket2(void)
 
 void	malloc_g_ping(void)
 {
+	g_ping.buffer = NULL;
 	g_ping.pid = htons(getpid());
 	g_ping.num_pings = 5;
-	g_ping.min_rtt = DBL_MAX;
+	g_ping.min_rtt = LONG_MAX;
 	g_ping.tries = 0;
 	g_ping.num_success = 0;
 	g_ping.num_failures = 0;
 	g_ping.rtt = malloc(sizeof(double));
+	g_ping.total_rtt = 0;
+	g_ping.min_rtt = LONG_MAX;
+	g_ping.max_rtt = LONG_MIN;
 	g_ping.packet_size = g_ping.size_number + 8;
 }
 

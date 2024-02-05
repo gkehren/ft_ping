@@ -6,28 +6,28 @@
 /*   By: gkehren <gkehren@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/25 02:28:45 by gkehren           #+#    #+#             */
-/*   Updated: 2023/11/25 16:59:09 by gkehren          ###   ########.fr       */
+/*   Updated: 2024/02/05 20:54:55 by gkehren          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef FT_PING_H
 # define FT_PING_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <signal.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <netinet/ip.h>
-#include <netinet/ip_icmp.h>
-#include <netdb.h>
-#include <errno.h>
-#include <float.h>
-#include <math.h>
+# include <stdio.h>
+# include <stdlib.h>
+# include <string.h>
+# include <unistd.h>
+# include <signal.h>
+# include <sys/time.h>
+# include <sys/types.h>
+# include <sys/socket.h>
+# include <arpa/inet.h>
+# include <netinet/ip.h>
+# include <netinet/ip_icmp.h>
+# include <netdb.h>
+# include <errno.h>
+# include <limits.h>
+# include <math.h>
 
 typedef struct s_packet
 {
@@ -40,6 +40,7 @@ typedef struct s_ping
 	int						sockfd;
 	struct sockaddr_in		target_addr;
 	t_packet				*packet;
+	uint8_t					*buffer;
 	struct timeval			start_time;
 	struct timeval			end_time;
 	struct timeval			timeout;
@@ -59,16 +60,8 @@ typedef struct s_ping
 	int						pid;
 	int						verbose;
 	int						help;
-	int						flood;
-	int						preload;
-	int						numeric;
-	int						w_timeout;
-	int						linger;
-	int						ignore_routing;
 	int						size_number;
 	int						packet_size;
-	int						tos;
-	int						ip_timestamp;
 	int						pattern;
 }	t_ping;
 
@@ -86,12 +79,12 @@ int					ft_strcmp(const char *s1, const char *s2);
 double				get_elapsed_time(struct timeval *start_time,
 						struct timeval *end_time);
 void				handle_sigint(int signal);
-void				handle_sigalrm(int signal);
 int					error_handler(const char *str, void *ptr);
+int					end_of_pings(void);
 char				*ft_strndup(const char *s, size_t n);
 int					ft_atoi(const char *str);
 size_t				ft_strlen(const char *s);
 int					init_socket(void);
-int					parse_one_arg(char *arg, char *next_arg);
+int					parse_one_arg(char *arg);
 
 #endif

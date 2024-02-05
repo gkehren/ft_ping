@@ -6,7 +6,7 @@
 /*   By: gkehren <gkehren@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 23:25:29 by gkehren           #+#    #+#             */
-/*   Updated: 2023/11/25 17:00:20 by gkehren          ###   ########.fr       */
+/*   Updated: 2024/02/05 19:21:44 by gkehren          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ void	parse_args(char **argv)
 	arg = ft_split(argv, ' ');
 	while (arg[i])
 	{
-		if (parse_one_arg(arg[i], arg[i + 1]) == 1)
+		if (parse_one_arg(arg[i]) == 1)
 		{
 			ft_free_split(arg);
 			free(g_ping.fqdn);
@@ -55,11 +55,6 @@ void	init_g_ping(char **argv)
 	g_ping.ttl = 64;
 	g_ping.size_number = 56;
 	g_ping.packet_size = 64;
-	g_ping.linger = 0;
-	g_ping.w_timeout = 0;
-	g_ping.numeric = 0;
-	g_ping.ignore_routing = 0;
-	g_ping.tos = 0;
 	g_ping.pattern = 'A';
 	parse_args(argv);
 }

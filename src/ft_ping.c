@@ -6,7 +6,7 @@
 /*   By: gkehren <gkehren@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/11/24 23:31:45 by gkehren           #+#    #+#             */
-/*   Updated: 2023/11/25 16:59:38 by gkehren          ###   ########.fr       */
+/*   Updated: 2024/02/05 20:52:50 by gkehren          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,86 +35,82 @@ void	init_packet(void)
 	gettimeofday(&g_ping.start_time, NULL);
 }
 
+int	handle_receive_error(uint8_t *buffer)
+{
+	if (errno == EINTR)
+	{
+		printf("Request timed out for icmp_seq %d\n", g_ping.tries);
+		g_ping.tries++;
+		g_ping.num_failures++;
+		return (0);
+	}
+	else if (errno == EAGAIN)
+	{
+		g_ping.tries++;
+		g_ping.num_failures++;
+		return (0);
+	}
+	return (error_handler("recvfrom", buffer));
+}
+
 int	handle_receive(uint8_t *buffer)
 {
 	struct iovec	iov[1];
 	struct msghdr	msg;
+	ssize_t			num_bytes;
 
 	iov[0].iov_base = buffer;
 	iov[0].iov_len = g_ping.size_number;
 	msg = (struct msghdr){0};
 	msg.msg_iov = iov;
 	msg.msg_iovlen = 1;
-	if (recvmsg(g_ping.sockfd, &msg, 0) < 0)
+	num_bytes = recvmsg(g_ping.sockfd, &msg, 0);
+	if (num_bytes < 0)
 	{
-		if (errno == EINTR)
-		{
-			printf("Request timed out for icmp_seq %d\n", g_ping.tries);
-			g_ping.tries++;
-			g_ping.num_failures++;
-		}
-		else if (errno == EAGAIN)
-		{
-			g_ping.tries++;
-			g_ping.num_failures++;
-		}
+		if (handle_receive_error(buffer) == 0)
+			return (0);
 		else
-			return (error_handler("recvfrom", buffer));
+			return (-1);
 	}
-	return (0);
+	return (num_bytes);
 }
 
 int	handle_packet(void)
 {
 	struct iphdr	*ip_header;
 	struct icmphdr	*icmp_header;
-	uint8_t			*buffer;
+	int				num_bytes;
 
-	buffer = malloc(sizeof(uint8_t) * g_ping.size_number);
+	g_ping.buffer = malloc(sizeof(uint8_t) * g_ping.size_number);
 	init_packet();
 	if (sendto(g_ping.sockfd, g_ping.packet, g_ping.packet_size, 0,
 			(struct sockaddr *)&g_ping.target_addr,
 			sizeof(g_ping.target_addr)) < 0)
-		return (error_handler("sendto", buffer));
-	if (handle_receive(buffer) == 1)
-		return (1);
-	ip_header = (struct iphdr *)buffer;
-	icmp_header = (struct icmphdr *)(buffer + sizeof(struct iphdr));
-	display_packet(ip_header, icmp_header);
-	free(buffer);
+		return (error_handler("sendto", g_ping.buffer));
+	num_bytes = handle_receive(g_ping.buffer);
+	if (num_bytes == -1)
+		return (-1);
+	else if ((size_t)num_bytes > sizeof(struct iphdr) + sizeof(struct icmphdr))
+	{
+		ip_header = (struct iphdr *)g_ping.buffer;
+		icmp_header = (struct icmphdr *)(g_ping.buffer + sizeof(struct iphdr));
+		display_packet(ip_header, icmp_header);
+	}
+	free(g_ping.buffer);
+	g_ping.buffer = NULL;
 	return (0);
-}
-
-int	end_of_pings(void)
-{
-	display_stats();
-	close(g_ping.sockfd);
-	free(g_ping.packet->data);
-	free(g_ping.packet);
-	free(g_ping.ip_address);
-	free(g_ping.fqdn);
-	free(g_ping.rtt);
-	if (g_ping.num_success > 0)
-		return (0);
-	else
-		return (1);
 }
 
 int	ping(void)
 {
 	signal(SIGINT, handle_sigint);
-	if (g_ping.w_timeout > 0)
-	{
-		signal(SIGALRM, handle_sigalrm);
-		alarm(g_ping.w_timeout);
-	}
 	display_address();
 	g_ping.packet = malloc(g_ping.packet_size);
 	memset(g_ping.packet, 0, g_ping.packet_size);
 	g_ping.packet->data = malloc(g_ping.size_number);
 	while (1)
 	{
-		if (handle_packet() == 1)
+		if (handle_packet() == -1)
 			return (1);
 		g_ping.tries++;
 		usleep(1000000);
