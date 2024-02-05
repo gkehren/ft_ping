@@ -6,7 +6,7 @@ CC:=gcc
 SRCPATH:=src/
 INCLUDES:=
 CCHPATH:=obj/
-CFLAGS:=-Wall -Werror -Wextra -g
+CFLAGS:=-Wall -Werror -Wextra
 # ==================
 
 # ----- Colors -----
